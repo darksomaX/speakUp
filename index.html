@@ -6,28 +6,25 @@
 <title>SpeakUp — Speech Practice</title>
 <meta name="description" content="Browser-based speech practice with real-time transcription, filler detection, vocabulary scoring, and pacing analysis.">
 <meta name="theme-color" content="#f7f5f0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-:root {
-  --black: #0d0d0d; --white: #f7f5f0; --surface: #f0ede8; --border: #ddd9d2;
-  --text-muted: #6b6560; --accent: #c8502a; --filler-bg: #fef0e8; --filler-text: #7a3a10;
-  --green: #2a6b3e; --score-circle: #0d0d0d; --slow: #e06030; --fast: #3080d0;
-  --on-track: #2a6b3e; --vocab-bg: #eef5ee; --vocab-text: #2a6b3e;
-  --repeat-bg: #fde8e8; --repeat-text: #a03030;
-  --radius: 12px; --transition: 200ms ease;
+:root{
+  --black:#0d0d0d;--white:#f7f5f0;--surface:#f0ede8;--border:#ddd9d2;
+  --text-muted:#6b6560;--accent:#c8502a;--filler-bg:#fef0e8;--filler-text:#7a3a10;
+  --green:#2a6b3e;--score-circle:#0d0d0d;--slow:#e06030;--fast:#3080d0;
+  --on-track:#2a6b3e;--vocab-bg:#eef5ee;--vocab-text:#2a6b3e;
+  --repeat-bg:#fde8e8;--repeat-text:#a03030;
+  --radius:12px;--transition:200ms ease;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --black: #f7f5f0; --white: #111; --surface: #1a1917; --border: #333;
-    --text-muted: #9a9590; --accent: #e0633a; --filler-bg: #3a2a18; --filler-text: #f0c090;
-    --green: #4aad65; --score-circle: #f7f5f0; --slow: #e07040; --fast: #5090e0;
-    --on-track: #4aad65; --vocab-bg: #1e2e1e; --vocab-text: #6dcc8a;
-    --repeat-bg: #3a1e1e; --repeat-text: #e07070;
-  }
+[data-theme="dark"]{
+  --black:#f7f5f0;--white:#111;--surface:#1a1917;--border:#333;
+  --text-muted:#9a9590;--accent:#e0633a;--filler-bg:#3a2a18;--filler-text:#f0c090;
+  --green:#4aad65;--score-circle:#f7f5f0;--slow:#e07040;--fast:#5090e0;
+  --on-track:#4aad65;--vocab-bg:#1e2e1e;--vocab-text:#6dcc8a;
+  --repeat-bg:#3a1e1e;--repeat-text:#e07070;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px}
@@ -37,10 +34,13 @@ h1,h2,h3{font-family:'DM Serif Display',serif;letter-spacing:-0.03em;font-weight
 .screen{display:none;opacity:0;transition:opacity var(--transition)}
 .screen.active{display:flex;flex-direction:column;opacity:1}
 .container{max-width:700px;margin:0 auto;padding:24px 20px;width:100%}
-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:10}
-.logo{font-family:'DM Serif Display',serif;font-size:1.3rem;letter-spacing:-0.03em;cursor:pointer}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);z-index:10;gap:12px}
+.logo{font-family:'DM Serif Display',serif;font-size:1.3rem;letter-spacing:-0.03em;cursor:pointer;white-space:nowrap}
 .logo span{color:var(--accent)}
-.kbd-hint{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em}
+.header-right{display:flex;align-items:center;gap:14px}
+.kbd-hint{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:1rem;color:var(--black);line-height:1;transition:all var(--transition)}
+.theme-btn:hover{background:var(--surface)}
 .btn{font-family:'DM Sans',sans-serif;font-weight:500;font-size:0.95rem;padding:12px 28px;border-radius:8px;border:1px solid var(--border);background:var(--white);color:var(--black);cursor:pointer;transition:all var(--transition)}
 .btn:hover{background:var(--surface)}.btn:active{transform:scale(0.97)}
 .btn-primary{background:var(--black);color:var(--white);border-color:var(--black)}
@@ -84,9 +84,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .transcript-box:empty::before{content:'Start speaking...';color:var(--text-muted);font-style:italic;font-size:1.1rem}
 .interim{color:var(--text-muted);font-style:italic}
 .filler{background:var(--filler-bg);color:var(--filler-text);border-radius:3px;padding:1px 4px}
-.vocab-upgrade{background:var(--vocab-bg);color:var(--vocab-text);border-radius:3px;padding:1px 4px;cursor:help;position:relative}
-.vocab-upgrade:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--black);color:var(--white);font-size:0.75rem;padding:4px 8px;border-radius:4px;white-space:nowrap;z-index:99}
-.repeat-flag{background:var(--repeat-bg);color:var(--repeat-text);border-radius:3px;padding:1px 4px;font-size:0.7rem;vertical-align:super;margin-left:2px}
 .speech-textarea{width:100%;min-height:140px;padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:0.9rem;resize:vertical;color:var(--black);margin:8px 0}
 .speech-textarea:focus{outline:none;border-color:var(--accent)}
 .sentence-results{text-align:left;margin:16px 0;max-width:600px;margin-left:auto;margin-right:auto}
@@ -131,7 +128,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:16p
 .tip-text{font-size:0.88rem;line-height:1.55}
 #screen-history .container{padding-top:24px}
 #screen-history h2{font-size:1.4rem;margin-bottom:16px}
-.sparkline-wrap{margin-bottom:24px;padding:16px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);position:relative}
+.sparkline-wrap{margin-bottom:24px;padding:16px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)}
 .sparkline-wrap svg{width:100%;height:60px}
 .streak-badge{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--filler-bg);color:var(--accent);margin-bottom:16px}
 .session-list{display:flex;flex-direction:column;gap:8px}
@@ -158,19 +155,24 @@ button:focus:not(:focus-visible){outline:none}
 .vocab-arrow{color:var(--text-muted)}
 .vocab-found{background:var(--vocab-bg);color:var(--vocab-text);padding:2px 6px;border-radius:3px;font-weight:500}
 .vocab-better{background:var(--green);color:#fff;padding:2px 6px;border-radius:3px;font-weight:500}
-@media(max-width:520px){.mode-grid{flex-direction:column}.stats-bar{flex-wrap:wrap}.stat-item{flex:1 1 30%;border-bottom:1px solid var(--border);padding:10px}.transcript-box{font-size:1.15rem;padding:20px 16px}}
+@media(max-width:600px){.mode-grid{flex-direction:column}.stats-bar{flex-wrap:wrap}.stat-item{flex:1 1 30%;border-bottom:1px solid var(--border);padding:10px}.transcript-box{font-size:1.15rem;padding:20px 16px}.kbd-hint{display:none}}
 </style>
 </head>
 <body>
 <header>
   <div class="logo" onclick="showScreen('home')">Speak<span>Up</span></div>
-  <div class="kbd-hint">Space = record · Esc = cancel</div>
+  <div class="header-right">
+    <span class="kbd-hint">Space = record &middot; Esc = cancel</span>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode">&#9789;</button>
+  </div>
 </header>
+
 <div id="screen-error" class="screen"><div class="container">
   <h2>Browser not supported</h2>
   <p>SpeakUp requires Chrome or Edge for speech recognition. Please open this page in one of those browsers.</p>
   <button class="btn btn-primary" onclick="location.reload()">Try again</button>
 </div></div>
+
 <div id="screen-home" class="screen"><div class="container">
   <h1>Practice your speech</h1>
   <p class="subtitle">Real-time feedback. Zero cost. No sign-up.</p>
@@ -187,6 +189,7 @@ button:focus:not(:focus-visible){outline:none}
   <div class="mt-8 text-muted text-sm">or press <span class="mono">Space</span></div>
   <div class="nav-row mt-16"><button class="btn btn-sm" onclick="showScreen('history');renderHistory()">History (H)</button></div>
 </div></div>
+
 <div id="screen-record" class="screen"><div class="container">
   <div id="prompt-area" class="prompt-box hidden"><div class="prompt-label">Your prompt</div><div class="prompt-text" id="prompt-text"></div><div class="prompt-timer mono" id="prompt-timer">2:00</div></div>
   <div id="speech-header" class="hidden" style="margin-bottom:12px">
@@ -205,8 +208,9 @@ button:focus:not(:focus-visible){outline:none}
   </div>
   <div class="voice-info"><span><span class="voice-dot low"></span>Low &lt;150Hz</span><span><span class="voice-dot mid"></span>Mid</span><span><span class="voice-dot high"></span>High &gt;250Hz</span></div>
   <div id="transcript-area" class="transcript-box"></div>
-  <div class="text-muted text-sm mt-8">Press <span class="mono">Space</span> to stop · <span class="mono">Esc</span> to cancel</div>
+  <div class="text-muted text-sm mt-8">Press <span class="mono">Space</span> to stop &middot; <span class="mono">Esc</span> to cancel</div>
 </div></div>
+
 <div id="screen-results" class="screen"><div class="container">
   <h2 style="margin-bottom:24px">Session complete</h2>
   <div class="score-ring" id="score-ring"><svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="62" fill="none" stroke="var(--surface)" stroke-width="8"/><circle id="score-arc" cx="70" cy="70" r="62" fill="none" stroke="var(--score-circle)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 389.56"/></svg><div class="score-number"><span id="score-num">0</span></div></div>
@@ -214,31 +218,50 @@ button:focus:not(:focus-visible){outline:none}
   <div class="metrics" id="metrics"></div>
   <div id="vocab-report-area" class="hidden"><div class="vocab-report" id="vocab-report"></div></div>
   <div id="sentence-results-area" class="hidden"><div class="toggle-row"><label class="toggle-switch"><input type="checkbox" id="toggle-pace-color" checked><span class="toggle-track"></span></label><span>Highlight pace</span></div><div class="sentence-results" id="sentence-results"></div></div>
-  <h3 id="tips-heading" style="font-size:1rem;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-weight:500">Tips for next time</h3>
+  <h3 style="font-size:1rem;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-weight:500">Tips for next time</h3>
   <div class="tips" id="tips"></div>
   <div class="nav-row"><button class="btn btn-primary" onclick="restartSession()">Restart (R)</button><button class="btn" onclick="showScreen('history');renderHistory()">History (H)</button></div>
 </div></div>
+
 <div id="screen-history" class="screen"><div class="container">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2>History</h2><button class="btn btn-sm" onclick="showScreen('home')">← Back</button></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2>History</h2><button class="btn btn-sm" onclick="showScreen('home')">Back</button></div>
   <div id="streak-area"></div>
   <div class="sparkline-wrap" id="sparkline-wrap"><svg id="sparkline" viewBox="0 0 300 60" preserveAspectRatio="none"></svg></div>
   <div class="session-list" id="session-list"></div>
   <div id="history-empty" class="text-muted text-sm" style="text-align:center;padding:40px 0">No sessions yet. Start practicing!</div>
 </div></div>
+
 <script>
-// ─── State ─────────────────────────────────────────────────────────────────
+/* ─── State ──────────────────────────────────────────────────────────── */
 let currentMode='freeform',isRecording=false,recognition=null,audioCtx=null,analyser=null,pitchBuf=null,stream=null,animFrameId=null;
 let startTime=0,finalTranscript=[],interimText='',wordCount=0,fillerCount=0,repeatPenalty=0,pauseCount=0,longPauseCount=0,silenceStart=0,inSilence=false;
 let timerInterval=null,wpmInterval=null,promptTimerInterval=null,promptSecondsLeft=0;
 let currentPitch=0,pitchSamples=[];
-let speechSentences=[],speechTargetSeconds=180,speechElapsed=0;
+let speechSentences=[],speechTargetSeconds=180;
 let vocabScore=0,vocabUpgrades=[];
 const BAR_COUNT=8;
 
-// ─── Filler words (longest first) ─────────────────────────────────────────
+/* ─── Theme ──────────────────────────────────────────────────────────── */
+function initTheme(){
+  const saved=localStorage.getItem('speakup_theme');
+  if(saved==='dark')document.documentElement.setAttribute('data-theme','dark');
+  else if(saved==='light')document.documentElement.removeAttribute('data-theme');
+  else if(window.matchMedia('(prefers-color-scheme:dark)').matches)document.documentElement.setAttribute('data-theme','dark');
+  updateThemeBtn();
+}
+function toggleTheme(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  if(isDark){document.documentElement.removeAttribute('data-theme');localStorage.setItem('speakup_theme','light')}
+  else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('speakup_theme','dark')}
+  updateThemeBtn();
+}
+function updateThemeBtn(){document.getElementById('theme-btn').innerHTML=document.documentElement.getAttribute('data-theme')==='dark'?'&#9788;':'&#9789;'}
+initTheme();
+
+/* ─── Filler words (longest first) ──────────────────────────────────── */
 const FILLER_PHRASES=['you know','kind of','sort of','i mean','basically','literally','actually','um','uh','like','right','so'];
 
-// ─── Vocabulary upgrade dictionary ────────────────────────────────────────
+/* ─── Vocabulary upgrade dictionary ─────────────────────────────────── */
 const VOCAB_UPGRADES={
   'good':'excellent','bad':'poor','big':'substantial','small':'minimal','nice':'pleasant',
   'happy':'delighted','sad':'sorrowful','important':'significant','interesting':'compelling',
@@ -250,26 +273,26 @@ const VOCAB_UPGRADES={
   'boring':'tedious','scary':'intimidating','funny':'amusing','angry':'furious',
   'calm':'composed','brave':'courageous','afraid':'apprehensive','kind':'compassionate',
   'mean':'spiteful','honest':'candid','fake':'inauthentic','real':'genuine',
-  'cool':'impressive','hot':'sweltering','cold':'frigid','warm','balmy',
-  'love':'admire','hate':'detest','like':'appreciate','want':'desire',
+  'cool':'impressive','hot':'sweltering','cold':'frigid','warm':'balmy',
+  'love':'admire','hate':'detest','want':'desire',
   'need':'require','help':'assist','make':'create','get':'obtain',
-  'give':'provide','take':'acquire','think':'consider','know':'understand',
+  'take':'acquire','think':'consider','know':'understand',
   'see':'observe','say':'articulate','tell':'convey','ask':'inquire',
   'try':'attempt','use':'utilise','work':'endeavour','move':'transition',
   'change':'transform','start':'commence','stop':'cease','open':'unveil',
-  'close':'conclude','show':'demonstrate','learn':'acquire','grow','flourish',
-  'keep':'retain','let':'permit','begin':'initiate','show':'illustrate',
+  'close':'conclude','show':'demonstrate','learn':'acquire','grow':'flourish',
+  'keep':'retain','let':'permit','begin':'initiate',
   'run':'operate','walk':'stroll','talk':'converse','look':'examine',
-  'find':'discover','give':'bestow','tell':'recount','great':'remarkable',
-  'very':'extremely','really':'genuinely','a lot':'considerably',
+  'find':'discover','great':'remarkable',
+  'very':'extremely','really':'genuinely',
   'thing':'element','stuff':'material','okay':'acceptable','maybe':'perhaps',
-  'always':'invariably','never':'under no circumstances'
+  'always':'invariably'
 };
 
-// ─── Prompts ──────────────────────────────────────────────────────────────
+/* ─── Prompts ────────────────────────────────────────────────────────── */
 const PROMPTS=["Tell me about yourself in under 2 minutes.","What's a problem you solved recently?","Explain your favourite hobby to someone who's never heard of it.","What would you do differently if you could start your career over?","Describe a time you disagreed with someone and how you handled it.","What's something most people get wrong about your field?","Tell me about a project you're proud of.","How do you handle stress and pressure?","What motivates you to do your best work?","Describe your ideal work environment.","What's the most important skill you've developed in the last year?","Explain a complex topic you know well to a 10-year-old.","What's one thing you'd change about how meetings are run?","Tell me about a mentor who influenced you.","What does success look like to you in 5 years?","Describe your morning routine.","What's a book or article that changed how you think?","How do you prioritise when everything feels urgent?","Tell me about a failure and what you learned.","What's something you believe that most people disagree with?"];
 
-// ─── Init ─────────────────────────────────────────────────────────────────
+/* ─── Init ───────────────────────────────────────────────────────────── */
 (function(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){showScreen('error');return}
@@ -278,338 +301,326 @@ const PROMPTS=["Tell me about yourself in under 2 minutes.","What's a problem yo
   showScreen('home');
 })();
 
-function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById('screen-'+n);if(el){el.offsetHeight;el.classList.add('active')}}
-function selectMode(m){currentMode=m;document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));document.querySelector(`.mode-btn[data-mode="${m}"]`).classList.add('active');document.getElementById('speech-input').classList.toggle('hidden',m!=='speech')}
+function showScreen(n){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});var el=document.getElementById('screen-'+n);if(el){el.offsetHeight;el.classList.add('active')}}
+function selectMode(m){currentMode=m;document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active')});document.querySelector('.mode-btn[data-mode="'+m+'"]').classList.add('active');document.getElementById('speech-input').classList.toggle('hidden',m!=='speech')}
 
-// ─── Pitch detection ──────────────────────────────────────────────────────
+/* ─── Pitch detection ────────────────────────────────────────────────── */
 function detectPitch(buf,sr){
-  let mx=Math.floor(buf.length/2),bo=-1,bc=0,rms=0;
-  for(let i=0;i<buf.length;i++)rms+=buf[i]*buf[i];
+  var mx=Math.floor(buf.length/2),bo=-1,bc=0,rms=0;
+  for(var i=0;i<buf.length;i++)rms+=buf[i]*buf[i];
   rms=Math.sqrt(rms/buf.length);if(rms<0.01)return 0;
-  let lc=1;
-  for(let o=8;o<mx;o++){let c=0;for(let i=0;i<mx;i++)c+=buf[i]*buf[i+o];c/=mx;
+  var lc=1;
+  for(var o=8;o<mx;o++){var c=0;for(var i=0;i<mx;i++)c+=buf[i]*buf[i+o];c/=mx;
     if(lc>0.1&&c>lc*0.9&&c>bc){bc=c;bo=o}lc=c}
   if(bo===-1||bc<0.01)return 0;return sr/bo;
 }
 
-// ─── Vocabulary analysis ──────────────────────────────────────────────────
+/* ─── Vocabulary analysis ────────────────────────────────────────────── */
 function analyzeVocabulary(text){
-  const words=text.toLowerCase().replace(/[^a-z\s'-]/g,'').split(/\s+/).filter(w=>w.length>2);
-  let found=0,total=0;const upgrades=[];
-  const seen=new Set();
-  for(const w of words){
-    if(w.length<3)continue;total++;
-    if(VOCAB_UPGRADES[w]&&!seen.has(w)){
-      found++;seen.add(w);
-      upgrades.push({original:w,upgrade:VOCAB_UPGRADES[w]});
-    }
+  var words=text.toLowerCase().replace(/[^a-z\s'-]/g,'').split(/\s+/).filter(function(w){return w.length>2});
+  var found=0,total=0;var upgrades=[];var seen={};
+  for(var i=0;i<words.length;i++){
+    var w=words[i];if(w.length<3)continue;total++;
+    if(VOCAB_UPGRADES[w]&&!seen[w]){found++;seen[w]=true;upgrades.push({original:w,upgrade:VOCAB_UPGRADES[w]})}
   }
-  // Score: fewer simple words = higher score. 0 simple = 100, all simple = 30
-  const rate=total>0?found/total:0;
+  var rate=total>0?found/total:0;
   vocabScore=Math.round(100-rate*70);
   vocabUpgrades=upgrades;
-  return{score:vocabScore,simpleCount:found,totalWords:total,rate,upgrades};
+  return{score:vocabScore,simpleCount:found,totalWords:total,rate:rate,upgrades:upgrades};
 }
 
-// ─── Repeat filler detection ──────────────────────────────────────────────
+/* ─── Repeat filler detection ────────────────────────────────────────── */
 function countRepeatFillers(text){
-  // "um ... um" or "so ... so" within 5 words counts as repeat penalty
-  const lower=text.toLowerCase();
-  const singleFillers=['um','uh','like','so','basically','literally','actually','right'];
-  const words=lower.split(/\s+/);
-  let repeats=0;
-  for(let i=0;i<words.length;i++){
-    const clean=words[i].replace(/[^a-z]/g,'');
-    if(!singleFillers.includes(clean))continue;
-    for(let j=i+1;j<Math.min(i+6,words.length);j++){
-      const clean2=words[j].replace(/[^a-z]/g,'');
+  var lower=text.toLowerCase();
+  var singleFillers=['um','uh','like','so','basically','literally','actually','right'];
+  var words=lower.split(/\s+/);
+  var repeats=0;
+  for(var i=0;i<words.length;i++){
+    var clean=words[i].replace(/[^a-z]/g,'');
+    if(singleFillers.indexOf(clean)===-1)continue;
+    for(var j=i+1;j<Math.min(i+6,words.length);j++){
+      var clean2=words[j].replace(/[^a-z]/g,'');
       if(clean2===clean){repeats++;break}
     }
   }
   return repeats;
 }
 
-// ─── Session lifecycle ────────────────────────────────────────────────────
+/* ─── Session lifecycle ──────────────────────────────────────────────── */
 async function startSession(){
   if(isRecording)return;
   finalTranscript=[];interimText='';wordCount=0;fillerCount=0;repeatPenalty=0;pauseCount=0;longPauseCount=0;silenceStart=0;inSilence=false;
-  currentPitch=0;pitchSamples=[];speechSentences=[];speechElapsed=0;vocabScore=0;vocabUpgrades=[];
-  document.getElementById('stat-wpm').textContent='--';document.getElementById('stat-fillers').textContent='0';
-  document.getElementById('stat-pauses').textContent='0';document.getElementById('stat-hz').textContent='--';
-  document.getElementById('stat-vocab').textContent='--';document.getElementById('stat-time').textContent='0:00';
+  currentPitch=0;pitchSamples=[];speechSentences=[];vocabScore=0;vocabUpgrades=[];
+  document.getElementById('stat-wpm').textContent='--';
+  document.getElementById('stat-fillers').textContent='0';
+  document.getElementById('stat-pauses').textContent='0';
+  document.getElementById('stat-hz').textContent='--';
+  document.getElementById('stat-vocab').textContent='--';
+  document.getElementById('stat-time').textContent='0:00';
   document.getElementById('transcript-area').innerHTML='';
 
-  // Speech mode
-  const speechHeader=document.getElementById('speech-header');
+  var speechHeader=document.getElementById('speech-header');
   if(currentMode==='speech'){
-    const txt=document.getElementById('speech-text').value.trim();
+    var txt=document.getElementById('speech-text').value.trim();
     if(!txt){alert('Please type or paste your speech first.');return}
     speechSentences=txt.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[txt];
-    speechSentences=speechSentences.map(s=>s.trim()).filter(s=>s.length>0);
-    const tm=parseFloat(document.getElementById('speech-target-min').value)||3;
+    speechSentences=speechSentences.map(function(s){return s.trim()}).filter(function(s){return s.length>0});
+    var tm=parseFloat(document.getElementById('speech-target-min').value)||3;
     speechTargetSeconds=Math.round(tm*60);
     speechHeader.classList.remove('hidden');
     document.getElementById('speech-target-display').textContent='Target: '+Math.floor(speechTargetSeconds/60)+':'+String(speechTargetSeconds%60).padStart(2,'0');
     document.getElementById('speech-elapsed').textContent='0:00';
     document.getElementById('speech-progress-fill').style.width='0%';
-  }else speechHeader.classList.add('hidden');
+  }else{speechHeader.classList.add('hidden')}
 
-  // Prompt mode
-  const pa=document.getElementById('prompt-area');
+  var pa=document.getElementById('prompt-area');
   if(currentMode==='prompt'){
     document.getElementById('prompt-text').textContent=PROMPTS[Math.floor(Math.random()*PROMPTS.length)];
     pa.classList.remove('hidden');promptSecondsLeft=120;updatePromptTimer();
-    promptTimerInterval=setInterval(()=>{promptSecondsLeft--;updatePromptTimer();if(promptSecondsLeft<=0){clearInterval(promptTimerInterval);stopSession()}},1000);
-  }else pa.classList.add('hidden');
+    promptTimerInterval=setInterval(function(){promptSecondsLeft--;updatePromptTimer();if(promptSecondsLeft<=0){clearInterval(promptTimerInterval);stopSession()}},1000);
+  }else{pa.classList.add('hidden')}
 
   showScreen('record');document.getElementById('mic-btn').classList.add('recording');
 
-  // Audio — request mic ONCE
   try{stream=await navigator.mediaDevices.getUserMedia({audio:true});audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    const src=audioCtx.createMediaStreamSource(stream);analyser=audioCtx.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=0.8;src.connect(analyser);pitchBuf=new Float32Array(analyser.fftSize);
+    var src=audioCtx.createMediaStreamSource(stream);analyser=audioCtx.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=0.8;src.connect(analyser);pitchBuf=new Float32Array(analyser.fftSize);
   }catch(e){alert('Microphone access is required.');cancelSession();return}
 
-  // Speech recognition — reuse single instance
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-US';
   recognition.onresult=handleResult;
-  recognition.onerror=e=>{if(e.error==='no-speech'||e.error==='aborted'||e.error==='network')return;console.warn('recognition error:',e.error)};
-  // Prevent 60s timeout: on Chrome, SpeechRecognition auto-stops after ~60s of silence.
-  // We restart it WITHOUT re-requesting the mic (mic stream persists via getUserMedia).
-  recognition.onend=()=>{if(isRecording){setTimeout(()=>{if(isRecording)try{recognition.start()}catch(e){}},200)}};
+  recognition.onerror=function(e){if(e.error==='no-speech'||e.error==='aborted'||e.error==='network')return;console.warn('recognition error:',e.error)};
+  recognition.onend=function(){if(isRecording){setTimeout(function(){if(isRecording)try{recognition.start()}catch(e){}},200)}};
   startTime=Date.now();isRecording=true;recognition.start();startWaveform();startTimer();startWPMUpdater();
 }
 
 function handleResult(e){
-  if(!isRecording)return;let ni='';
-  for(let i=e.resultIndex;i<e.results.length;i++){
-    if(e.results[i].isFinal){const t=e.results[i][0].transcript.trim();if(t)finalTranscript.push({text:t,time:Date.now()})}
+  if(!isRecording)return;var ni='';
+  for(var i=e.resultIndex;i<e.results.length;i++){
+    if(e.results[i].isFinal){var t=e.results[i][0].transcript.trim();if(t)finalTranscript.push({text:t,time:Date.now()})}
     else ni+=e.results[i][0].transcript;
   }
-  const all=finalTranscript.map(s=>s.text).join(' ');
-  wordCount=all.split(/\s+/).filter(w=>w.length>0).length;
+  var all=finalTranscript.map(function(s){return s.text}).join(' ');
+  wordCount=all.split(/\s+/).filter(function(w){return w.length>0}).length;
   fillerCount=countFillers(all);
   repeatPenalty=countRepeatFillers(all);
   interimText=ni;renderTranscript();updateFillerDisplay();
-  // Update vocab live
-  if(wordCount>10){const v=analyzeVocabulary(all);document.getElementById('stat-vocab').textContent=v.score}
+  if(wordCount>10){var v=analyzeVocabulary(all);document.getElementById('stat-vocab').textContent=v.score}
 }
 
 function stopSession(){
   if(!isRecording)return;isRecording=false;
   if(recognition){recognition.onend=null;try{recognition.stop()}catch(e){}recognition=null}
   if(animFrameId)cancelAnimationFrame(animFrameId);
-  if(stream)stream.getTracks().forEach(t=>t.stop());
-  if(audioCtx)audioCtx.close().catch(()=>{});audioCtx=null;analyser=null;stream=null;pitchBuf=null;
+  if(stream)stream.getTracks().forEach(function(t){t.stop()});
+  if(audioCtx)audioCtx.close().catch(function(){});audioCtx=null;analyser=null;stream=null;pitchBuf=null;
   clearInterval(timerInterval);clearInterval(wpmInterval);clearInterval(promptTimerInterval);
   document.getElementById('mic-btn').classList.remove('recording');
-  document.querySelectorAll('.wave-bar').forEach(b=>{b.classList.add('idle');b.style.height='4px'});
-  const dur=Math.round((Date.now()-startTime)/1000);
-  const wpm=dur>0?Math.round(wordCount/(dur/60)):0;
-  const avgP=pitchSamples.length?Math.round(pitchSamples.reduce((a,b)=>a+b,0)/pitchSamples.length):0;
-  const all=finalTranscript.map(s=>s.text).join(' ');
-  const vocab=analyzeVocabulary(all);
-  const score=computeScore(wordCount,fillerCount,repeatPenalty,wpm,longPauseCount,dur,vocab.score);
-  const tips=generateTips(fillerCount,repeatPenalty,wordCount,wpm,pauseCount,longPauseCount,dur);
-  saveSession({id:Date.now().toString(36),date:new Date().toISOString(),mode:currentMode,duration:dur,wordCount,fillerCount,repeatPenalty,wpm,longPauseCount,pauseCount,score,tips,avgPitch:avgP,vocabScore:vocab.score});
+  document.querySelectorAll('.wave-bar').forEach(function(b){b.classList.add('idle');b.style.height='4px'});
+  var dur=Math.round((Date.now()-startTime)/1000);
+  var wpm=dur>0?Math.round(wordCount/(dur/60)):0;
+  var avgP=pitchSamples.length?Math.round(pitchSamples.reduce(function(a,b){return a+b},0)/pitchSamples.length):0;
+  var all=finalTranscript.map(function(s){return s.text}).join(' ');
+  var vocab=analyzeVocabulary(all);
+  var score=computeScore(wordCount,fillerCount,repeatPenalty,wpm,longPauseCount,dur,vocab.score);
+  var tips=generateTips(fillerCount,repeatPenalty,wordCount,wpm,pauseCount,longPauseCount,dur);
+  saveS({id:Date.now().toString(36),date:new Date().toISOString(),mode:currentMode,duration:dur,wordCount:wordCount,fillerCount:fillerCount,repeatPenalty:repeatPenalty,wpm:wpm,longPauseCount:longPauseCount,pauseCount:pauseCount,score:score,tips:tips,avgPitch:avgP,vocabScore:vocab.score});
   showResults(score,wordCount,fillerCount,repeatPenalty,wpm,pauseCount,longPauseCount,dur,tips,avgP,vocab);
 }
 
 function cancelSession(){
   if(recognition){recognition.onend=null;try{recognition.stop()}catch(e){}recognition=null}
   if(animFrameId)cancelAnimationFrame(animFrameId);
-  if(stream)stream.getTracks().forEach(t=>t.stop());
-  if(audioCtx)audioCtx.close().catch(()=>{});audioCtx=null;analyser=null;stream=null;pitchBuf=null;
+  if(stream)stream.getTracks().forEach(function(t){t.stop()});
+  if(audioCtx)audioCtx.close().catch(function(){});audioCtx=null;analyser=null;stream=null;pitchBuf=null;
   clearInterval(timerInterval);clearInterval(wpmInterval);clearInterval(promptTimerInterval);
   isRecording=false;document.getElementById('mic-btn').classList.remove('recording');
-  document.querySelectorAll('.wave-bar').forEach(b=>{b.classList.add('idle');b.style.height='4px'});
+  document.querySelectorAll('.wave-bar').forEach(function(b){b.classList.add('idle');b.style.height='4px'});
   showScreen('home');
 }
 function restartSession(){showScreen('home')}
 
-// ─── Filler detection ────────────────────────────────────────────────────
+/* ─── Filler detection ──────────────────────────────────────────────── */
 function countFillers(text){
-  const l=text.toLowerCase(),m=new Array(l.length).fill(false);
-  for(const p of FILLER_PHRASES){let idx=0;while(true){
-    const pos=l.indexOf(p,idx);if(pos===-1)break;
-    const bok=pos===0||/[^a-z]/.test(l[pos-1]),ap=pos+p.length,aok=ap>=l.length||/[^a-z]/.test(l[ap]);
-    if(bok&&aok){let dup=false;for(let k=pos;k<ap;k++)if(m[k]){dup=true;break}
-      if(!dup)for(let k=pos;k<ap;k++)m[k]=true}idx=pos+1}}
-  let c=0;for(let i=0;i<m.length;i++)if(m[i]&&(i===0||!m[i-1]))c++;return c;
+  var l=text.toLowerCase();var m=new Array(l.length);
+  for(var k=0;k<m.length;k++)m[k]=false;
+  for(var pi=0;pi<FILLER_PHRASES.length;pi++){var p=FILLER_PHRASES[pi];var idx=0;
+    while(true){var pos=l.indexOf(p,idx);if(pos===-1)break;
+      var bok=pos===0||/[^a-z]/.test(l[pos-1]);var ap=pos+p.length;var aok=ap>=l.length||/[^a-z]/.test(l[ap]);
+      if(bok&&aok){var dup=false;for(var k=pos;k<ap;k++)if(m[k]){dup=true;break}
+        if(!dup)for(var k=pos;k<ap;k++)m[k]=true}idx=pos+1}}
+  var c=0;for(var i=0;i<m.length;i++)if(m[i]&&(i===0||!m[i-1]))c++;return c;
 }
 
 function highlightFillers(text){
-  if(!text)return'';const l=text.toLowerCase(),m=new Array(l.length).fill(false);
-  for(const p of FILLER_PHRASES){let idx=0;while(true){
-    const pos=l.indexOf(p,idx);if(pos===-1)break;
-    const bok=pos===0||/[^a-z]/.test(l[pos-1]),ap=pos+p.length,aok=ap>=l.length||/[^a-z]/.test(l[ap]);
-    if(bok&&aok){let dup=false;for(let k=pos;k<ap;k++)if(m[k]){dup=true;break}
-      if(!dup)for(let k=pos;k<ap;k++)m[k]=true}idx=pos+1}}
-  // Also detect repeat fillers
-  const words=text.split(/(\s+)/);const lowerWords=text.toLowerCase().split(/(\s+)/);
-  let html='',i=0;
+  if(!text)return '';var l=text.toLowerCase();var m=new Array(l.length);
+  for(var k=0;k<m.length;k++)m[k]=false;
+  for(var pi=0;pi<FILLER_PHRASES.length;pi++){var p=FILLER_PHRASES[pi];var idx=0;
+    while(true){var pos=l.indexOf(p,idx);if(pos===-1)break;
+      var bok=pos===0||/[^a-z]/.test(l[pos-1]);var ap=pos+p.length;var aok=ap>=l.length||/[^a-z]/.test(l[ap]);
+      if(bok&&aok){var dup=false;for(var k=pos;k<ap;k++)if(m[k]){dup=true;break}
+        if(!dup)for(var k=pos;k<ap;k++)m[k]=true}idx=pos+1}}
+  var html='';var i=0;
   while(i<text.length){
-    if(m[i]){let re=i;while(re<text.length&&m[re])re++;
-      html+=`<span class="filler">${escHtml(text.substring(i,re))}</span>`;i=re}
+    if(m[i]){var re=i;while(re<text.length&&m[re])re++;
+      html+='<span class="filler">'+escHtml(text.substring(i,re))+'</span>';i=re}
     else{html+=escHtml(text[i]);i++}}
   return html;
 }
 
 function renderTranscript(){
-  const all=finalTranscript.map(s=>s.text).join(' ');
-  document.getElementById('transcript-area').innerHTML=
-    highlightFillers(all)+(interimText?` <span class="interim">${escHtml(interimText)}</span>`:'');
-  const tb=document.getElementById('transcript-area');tb.scrollTop=tb.scrollHeight;
+  var all=finalTranscript.map(function(s){return s.text}).join(' ');
+  var tb=document.getElementById('transcript-area');
+  tb.innerHTML=highlightFillers(all)+(interimText?' <span class="interim">'+escHtml(interimText)+'</span>':'');
+  tb.scrollTop=tb.scrollHeight;
 }
-function updateFillerDisplay(){const el=document.getElementById('stat-fillers'),p=parseInt(el.textContent)||0;if(fillerCount!==p){el.textContent=fillerCount;el.classList.remove('pulse');el.offsetHeight;el.classList.add('pulse')}}
+function updateFillerDisplay(){var el=document.getElementById('stat-fillers'),p=parseInt(el.textContent)||0;if(fillerCount!==p){el.textContent=fillerCount;el.classList.remove('pulse');el.offsetHeight;el.classList.add('pulse')}}
 
-// ─── Waveform + pitch + pauses ──────────────────────────────────────────
+/* ─── Waveform + pitch + pauses ─────────────────────────────────────── */
 function startWaveform(){
-  const bars=document.querySelectorAll('.wave-bar');bars.forEach(b=>b.classList.remove('idle'));
-  const bl=analyser.frequencyBinCount,da=new Uint8Array(bl);
+  var bars=document.querySelectorAll('.wave-bar');bars.forEach(function(b){b.classList.remove('idle')});
+  var bl=analyser.frequencyBinCount,da=new Uint8Array(bl);
   function draw(){
     if(!isRecording||!analyser)return;animFrameId=requestAnimationFrame(draw);
-    analyser.getByteFrequencyData(da);const step=Math.floor(bl/BAR_COUNT);let sum=0;
-    for(let i=0;i<BAR_COUNT;i++){let bs=0;for(let j=0;j<step;j++)bs+=da[i*step+j];const avg=bs/step;bars[i].style.height=Math.max(4,(avg/255)*36)+'px';sum+=avg}
-    const ma=sum/BAR_COUNT,now=Date.now();
+    analyser.getByteFrequencyData(da);var step=Math.floor(bl/BAR_COUNT);var sum=0;
+    for(var i=0;i<BAR_COUNT;i++){var bs=0;for(var j=0;j<step;j++)bs+=da[i*step+j];var avg=bs/step;bars[i].style.height=Math.max(4,(avg/255)*36)+'px';sum+=avg}
+    var ma=sum/BAR_COUNT,now=Date.now();
     if(ma<10){if(!inSilence){inSilence=true;silenceStart=now}}
-    else{if(inSilence){const sd=now-silenceStart;
+    else{if(inSilence){var sd=now-silenceStart;
       if(sd>800){pauseCount++;document.getElementById('stat-pauses').textContent=pauseCount}
       if(sd>2500)longPauseCount++}inSilence=false}
     if(pitchBuf&&Math.random()<0.12){analyser.getFloatTimeDomainData(pitchBuf);
-      const p=detectPitch(pitchBuf,audioCtx.sampleRate);if(p>50&&p<600){currentPitch=Math.round(p);pitchSamples.push(currentPitch);document.getElementById('stat-hz').textContent=currentPitch}}
+      var pp=detectPitch(pitchBuf,audioCtx.sampleRate);if(pp>50&&pp<600){currentPitch=Math.round(pp);pitchSamples.push(currentPitch);document.getElementById('stat-hz').textContent=currentPitch}}
   }draw();
 }
 
-// ─── Timers ─────────────────────────────────────────────────────────────
+/* ─── Timers ─────────────────────────────────────────────────────────── */
 function startTimer(){updateTimerDisplay();timerInterval=setInterval(updateTimerDisplay,1000)}
-function updateTimerDisplay(){const e=Math.floor((Date.now()-startTime)/1000);document.getElementById('stat-time').textContent=Math.floor(e/60)+':'+String(e%60).padStart(2,'0')}
+function updateTimerDisplay(){var e=Math.floor((Date.now()-startTime)/1000);document.getElementById('stat-time').textContent=Math.floor(e/60)+':'+String(e%60).padStart(2,'0')}
 function startWPMUpdater(){wpmInterval=setInterval(updateWPM,2000)}
 function updateWPM(){if(wordCount<5){document.getElementById('stat-wpm').textContent='--';return}document.getElementById('stat-wpm').textContent=Math.round(wordCount/((Date.now()-startTime)/60000))}
-function updatePromptTimer(){const m=Math.floor(promptSecondsLeft/60);const el=document.getElementById('prompt-timer');el.textContent=m+':'+String(promptSecondsLeft%60).padStart(2,'0');el.style.color=promptSecondsLeft<=30?'var(--accent)':''}
+function updatePromptTimer(){var m=Math.floor(promptSecondsLeft/60);var el=document.getElementById('prompt-timer');el.textContent=m+':'+String(promptSecondsLeft%60).padStart(2,'0');el.style.color=promptSecondsLeft<=30?'var(--accent)':''}
 
-// ─── Scoring ───────────────────────────────────────────────────────────
+/* ─── Scoring ────────────────────────────────────────────────────────── */
 function computeScore(wc,fc,rp,wpm,lpc,dur,vs){
-  const fr=fc/Math.max(wc,1);
-  const fs=clamp(100-(fr*100*5)-rp*8,0,100);         // repeat fillers docked extra
-  const ps=clamp(100-Math.abs(wpm-130)*1.5,0,100);
-  const qs=clamp(100-lpc*15,0,100);
-  const vol=75;
-  let db=0;if(dur>=120)db=10;else if(dur>=60)db=5;
+  var fr=fc/Math.max(wc,1);
+  var fs=clamp(100-(fr*100*5)-rp*8,0,100);
+  var ps=clamp(100-Math.abs(wpm-130)*1.5,0,100);
+  var qs=clamp(100-lpc*15,0,100);var vol=75;
+  var db=0;if(dur>=120)db=10;else if(dur>=60)db=5;
   return clamp(Math.round(fs*0.22+ps*0.22+qs*0.18+vol*0.10+db*0.10*10+vs*0.18),0,100);
 }
 function clamp(v,mn,mx){return Math.min(mx,Math.max(mn,v))}
 
-// ─── Tips ──────────────────────────────────────────────────────────────
+/* ─── Tips ───────────────────────────────────────────────────────────── */
 function generateTips(fc,rp,wc,wpm,pc,lpc,dur){
-  const fr=fc/Math.max(wc,1);const tips=[];
-  if(rp>2)tips.push(`You repeated filler words ${rp} times (e.g. "um... um"). Repeated fillers are penalised heavily — replace them with a deliberate pause.`);
-  if(fr>0.10)tips.push(`You used ${fc} filler words (${Math.round(fr*100)}% of speech). Aim for under 5% — replace 'um' and 'like' with a brief pause.`);
-  if(wpm>160)tips.push(`You spoke at ${wpm} WPM — try slowing to 120–140 WPM. Faster isn't clearer.`);
-  if(wpm<90)tips.push(`You spoke at ${wpm} WPM — a little slow. Aim for 120–140 to keep listeners engaged.`);
-  if(lpc>1)tips.push(`You had ${lpc} pauses over 2.5 seconds. Try a brief mental outline before you speak.`);
-  if(pc===0&&dur>30)tips.push(`You spoke without pausing — intentional pauses let ideas land.`);
-  if(fr<=0.05&&wpm>=110&&wpm<=150)tips.push(`Strong session. Filler rate under 5% — excellent.`);
-  while(tips.length<3)tips.push(`Practice consistency. Record daily and watch your score trend upward.`);
+  var fr=fc/Math.max(wc,1);var tips=[];
+  if(rp>2)tips.push('You repeated filler words '+rp+' times (e.g. "um... um"). Repeated fillers are penalised heavily \u2014 replace them with a deliberate pause.');
+  if(fr>0.10)tips.push('You used '+fc+' filler words ('+Math.round(fr*100)+'% of speech). Aim for under 5% \u2014 replace \'um\' and \'like\' with a brief pause.');
+  if(wpm>160)tips.push('You spoke at '+wpm+' WPM \u2014 try slowing to 120\u2013140. Faster isn\'t clearer.');
+  if(wpm<90)tips.push('You spoke at '+wpm+' WPM \u2014 a little slow. Aim for 120\u2013140 to keep listeners engaged.');
+  if(lpc>1)tips.push('You had '+lpc+' pauses over 2.5 seconds. Try a brief mental outline before you speak.');
+  if(pc===0&&dur>30)tips.push('You spoke without pausing \u2014 intentional pauses let ideas land.');
+  if(fr<=0.05&&wpm>=110&&wpm<=150)tips.push('Strong session. Filler rate under 5% \u2014 excellent.');
+  while(tips.length<3)tips.push('Practice consistency. Record daily and watch your score trend upward.');
   return tips.slice(0,3);
 }
 
-// ─── Results display ──────────────────────────────────────────────────
+/* ─── Results display ────────────────────────────────────────────────── */
 function showResults(score,wc,fc,rp,wpm,pc,lpc,dur,tips,avgP,vocab){
   showScreen('results');
-  const circ=2*Math.PI*62,arc=document.getElementById('score-arc');
-  arc.style.transition='none';arc.style.strokeDasharray=`0 ${circ}`;
-  requestAnimationFrame(()=>{arc.style.transition='stroke-dasharray 800ms ease';arc.style.strokeDasharray=`${(score/100)*circ} ${circ}`});
+  var circ=2*Math.PI*62,arc=document.getElementById('score-arc');
+  arc.style.transition='none';arc.style.strokeDasharray='0 '+circ;
+  requestAnimationFrame(function(){arc.style.transition='stroke-dasharray 800ms ease';arc.style.strokeDasharray=(score/100)*circ+' '+circ});
   animNum(document.getElementById('score-num'),0,score,800);
-  const lb=document.getElementById('score-label');
+  var lb=document.getElementById('score-label');
   lb.textContent=score<50?'Keep practising':score<75?'Getting there':score<90?'Good work':'Excellent';
 
-  const fr=fc/Math.max(wc,1);
-  const metrics=[
-    {n:'Filler Words',v:`${fc} (${Math.round(fr*100)}%)`,p:clamp(100-(fr*100*5)-rp*8,0,100)},
-    {n:'Repeat Fillers',v:`${rp} repeats`,p:clamp(100-rp*20,0,100)},
-    {n:'Speaking Pace',v:`${wpm} WPM`,p:clamp(100-Math.abs(wpm-130)*1.5,0,100)},
-    {n:'Pause Quality',v:`${lpc} long`,p:clamp(100-lpc*15,0,100)},
-    {n:'Vocabulary',v:`${vocab.score}/100`,p:vocab.score},
+  var fr=fc/Math.max(wc,1);
+  var metrics=[
+    {n:'Filler Words',v:fc+' ('+Math.round(fr*100)+'%)',p:clamp(100-(fr*100*5)-rp*8,0,100)},
+    {n:'Repeat Fillers',v:rp+' repeats',p:clamp(100-rp*20,0,100)},
+    {n:'Speaking Pace',v:wpm+' WPM',p:clamp(100-Math.abs(wpm-130)*1.5,0,100)},
+    {n:'Pause Quality',v:lpc+' long',p:clamp(100-lpc*15,0,100)},
+    {n:'Vocabulary',v:vocab.score+'/100',p:vocab.score},
     {n:'Avg. Pitch',v:avgP>0?avgP+' Hz':'N/A',p:avgP>0?70:50},
-    {n:'Duration',v:fmtDur(dur),p:dur>=120?100:dur>=60?50:Math.round(dur/60*50)},
+    {n:'Duration',v:fmtDur(dur),p:dur>=120?100:dur>=60?50:Math.round(dur/60*50)}
   ];
-  const me=document.getElementById('metrics');me.innerHTML='';
-  metrics.forEach((m,i)=>{const r=document.createElement('div');r.className='metric-row';
-    const c=m.p>=75?'var(--green)':m.p>=50?'var(--accent)':'#b44';
-    r.innerHTML=`<div class="metric-header"><span class="metric-name">${m.n}</span><span class="metric-value mono">${m.v}</span></div><div class="metric-bar-bg"><div class="metric-bar-fill" style="background:${c}"></div></div>`;
+  var me=document.getElementById('metrics');me.innerHTML='';
+  metrics.forEach(function(m,i){var r=document.createElement('div');r.className='metric-row';
+    var c=m.p>=75?'var(--green)':m.p>=50?'var(--accent)':'#b44';
+    r.innerHTML='<div class="metric-header"><span class="metric-name">'+m.n+'</span><span class="metric-value mono">'+m.v+'</span></div><div class="metric-bar-bg"><div class="metric-bar-fill" style="background:'+c+'"></div></div>';
     me.appendChild(r);
-    setTimeout(()=>{r.classList.add('visible');r.querySelector('.metric-bar-fill').style.width=m.p+'%'},100+i*80)});
+    setTimeout(function(){r.classList.add('visible');r.querySelector('.metric-bar-fill').style.width=m.p+'%'},100+i*80)});
 
-  // Vocab report
-  const vra=document.getElementById('vocab-report-area');
-  if(vocab.upgrades.length>0){
-    vra.classList.remove('hidden');
-    const vr=document.getElementById('vocab-report');
-    vr.innerHTML=`<h3>Vocabulary upgrades <span class="text-muted text-sm" style="font-weight:300">(${vocab.simpleCount} simpler words found)</span></h3>`+
-      vocab.upgrades.slice(0,12).map(u=>`<div class="vocab-pair"><span class="vocab-found">${escHtml(u.original)}</span><span class="vocab-arrow">→</span><span class="vocab-better">${escHtml(u.upgrade)}</span></div>`).join('');
-  }else vra.classList.add('hidden');
+  var vra=document.getElementById('vocab-report-area');
+  if(vocab.upgrades.length>0){vra.classList.remove('hidden');
+    var vr=document.getElementById('vocab-report');
+    vr.innerHTML='<h3>Vocabulary upgrades <span class="text-muted text-sm" style="font-weight:300">('+vocab.simpleCount+' simpler words found)</span></h3>'+
+      vocab.upgrades.slice(0,12).map(function(u){return'<div class="vocab-pair"><span class="vocab-found">'+escHtml(u.original)+'</span><span class="vocab-arrow">\u2192</span><span class="vocab-better">'+escHtml(u.upgrade)+'</span></div>'}).join('');
+  }else{vra.classList.add('hidden')}
 
-  // Sentence breakdown
-  const sra=document.getElementById('sentence-results-area');
-  if(currentMode==='speech'&&speechSentences.length>0){sra.classList.remove('hidden');renderSentences(dur)}else sra.classList.add('hidden');
+  var sra=document.getElementById('sentence-results-area');
+  if(currentMode==='speech'&&speechSentences.length>0){sra.classList.remove('hidden');renderSentences(dur)}else{sra.classList.add('hidden')}
 
-  // Tips
-  const te=document.getElementById('tips');te.innerHTML='';
-  const ic=['★','⚡','→'];
-  tips.forEach((t,i)=>{const c=document.createElement('div');c.className='tip-card';
-    c.innerHTML=`<div class="tip-icon">${ic[i]}</div><div class="tip-text">${t}</div>`;te.appendChild(c);
-    setTimeout(()=>c.classList.add('visible'),400+i*100)});
+  var te=document.getElementById('tips');te.innerHTML='';
+  var ic=['\u2605','\u26A1','\u2192'];
+  tips.forEach(function(t,i){var c=document.createElement('div');c.className='tip-card';
+    c.innerHTML='<div class="tip-icon">'+ic[i]+'</div><div class="tip-text">'+t+'</div>';te.appendChild(c);
+    setTimeout(function(){c.classList.add('visible')},400+i*100)});
 }
 
 function renderSentences(totalDur){
-  const c=document.getElementById('sentence-results');
-  const tt=finalTranscript.map(s=>s.text).join(' ').trim();
-  const totalWords=speechSentences.reduce((a,s)=>a+s.split(/\s+/).length,0);
-  const rows=[];
-  speechSentences.forEach((sent,i)=>{
-    const wc=sent.split(/\s+/).length;
-    const actual=(wc/Math.max(wordCount,1))*totalDur;
-    const target=(wc/Math.max(totalWords,1))*speechTargetSeconds;
-    const ratio=target>0?actual/target:1;
-    let pace,cls;
+  var c=document.getElementById('sentence-results');
+  var totalWords=speechSentences.reduce(function(a,s){return a+s.split(/\s+/).length},0);
+  var rows=[];
+  speechSentences.forEach(function(sent){
+    var wc=sent.split(/\s+/).length;
+    var actual=(wc/Math.max(wordCount,1))*totalDur;
+    var target=(wc/Math.max(totalWords,1))*speechTargetSeconds;
+    var ratio=target>0?actual/target:1;
+    var pace,cls;
     if(ratio>1.3){pace='Slow';cls='slow'}else if(ratio<0.7){pace='Fast';cls='fast'}else{pace='On track';cls='on-track'}
-    rows.push({text:sent,time:actual,pace,cls});
+    rows.push({text:sent,time:actual,pace:pace,cls:cls});
   });
-  c.innerHTML='';rows.forEach(r=>{const d=document.createElement('div');d.className=`sentence-row ${r.cls}`;d.dataset.pace=r.cls;
-    d.innerHTML=`<span class="sentence-time">${Math.round(r.time)}s</span><span class="sentence-text">${escHtml(r.text)}</span><span class="pace-label ${r.cls}">${r.pace}</span>`;c.appendChild(d)});
-  const tg=document.getElementById('toggle-pace-color');
-  tg.onchange=()=>{c.querySelectorAll('.sentence-row').forEach(r=>{r.className=tg.checked?`sentence-row ${r.dataset.pace}`:'sentence-row'})};
+  c.innerHTML='';rows.forEach(function(r){var d=document.createElement('div');d.className='sentence-row '+r.cls;d.dataset.pace=r.cls;
+    d.innerHTML='<span class="sentence-time">'+Math.round(r.time)+'s</span><span class="sentence-text">'+escHtml(r.text)+'</span><span class="pace-label '+r.cls+'">'+r.pace+'</span>';c.appendChild(d)});
+  var tg=document.getElementById('toggle-pace-color');
+  tg.onchange=function(){c.querySelectorAll('.sentence-row').forEach(function(r){r.className=tg.checked?'sentence-row '+r.dataset.pace:'sentence-row'})};
 }
 
-function animNum(el,from,to,dur){const s=performance.now();(function t(n){const p=Math.min((n-s)/dur,1);el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(t)})(performance.now())}
+function animNum(el,from,to,dur){var s=performance.now();(function t(n){var p=Math.min((n-s)/dur,1);el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(t)})(performance.now())}
 
-// ─── History ──────────────────────────────────────────────────────────
-const SK='speakup_sessions';
-function getS(){try{return JSON.parse(localStorage.getItem(SK))||[]}catch{return[]}}
-function saveS(s){const a=getS();a.push(s);while(a.length>20)a.shift();localStorage.setItem(SK,JSON.stringify(a))}
+/* ─── History ────────────────────────────────────────────────────────── */
+var SK='speakup_sessions';
+function getS(){try{return JSON.parse(localStorage.getItem(SK))||[]}catch(e){return[]}}
+function saveS(s){var a=getS();a.push(s);while(a.length>20)a.shift();localStorage.setItem(SK,JSON.stringify(a))}
 function renderHistory(){
-  const ss=getS(),le=document.getElementById('session-list'),ee=document.getElementById('history-empty'),sw=document.getElementById('sparkline-wrap'),se=document.getElementById('streak-area');
+  var ss=getS(),le=document.getElementById('session-list'),ee=document.getElementById('history-empty'),sw=document.getElementById('sparkline-wrap'),se=document.getElementById('streak-area');
   if(!ss.length){ee.classList.remove('hidden');le.innerHTML='';sw.classList.add('hidden');se.innerHTML='';return}
   ee.classList.add('hidden');sw.classList.remove('hidden');
-  const st=calcStreak(ss);se.innerHTML=st>0?`<div class="streak-badge">🔥 ${st} day streak</div>`:'';
-  renderSpark(ss);const bs=Math.max(...ss.map(s=>s.score));le.innerHTML='';
-  [...ss].reverse().forEach(s=>{const d=new Date(s.date),ib=s.score===bs;const it=document.createElement('div');it.className='session-item';
-    it.innerHTML=`<div class="session-left"><div class="session-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})} · ${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div><div class="session-meta">${s.mode} · ${fmtDur(s.duration)} · ${s.wordCount} words</div></div><div style="text-align:right"><div class="session-score ${ib?'best':''}">${s.score}${ib?'<span class="best-badge">BEST</span>':''}</div></div>`;
+  var st=calcStreak(ss);se.innerHTML=st>0?'<div class="streak-badge">\uD83D\uDD25 '+st+' day streak</div>':'';
+  renderSpark(ss);var bs=Math.max.apply(null,ss.map(function(s){return s.score}));le.innerHTML='';
+  ss.slice().reverse().forEach(function(s){var d=new Date(s.date),ib=s.score===bs;var it=document.createElement('div');it.className='session-item';
+    it.innerHTML='<div class="session-left"><div class="session-date">'+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' \u00B7 '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+'</div><div class="session-meta">'+s.mode+' \u00B7 '+fmtDur(s.duration)+' \u00B7 '+s.wordCount+' words</div></div><div style="text-align:right"><div class="session-score'+(ib?' best':'')+'">'+s.score+(ib?'<span class="best-badge">BEST</span>':'')+'</div></div>';
     le.appendChild(it)});
 }
-function calcStreak(ss){if(!ss.length)return 0;const ds=[...new Set(ss.map(s=>new Date(s.date).toDateString()))].sort((a,b)=>new Date(b)-new Date(a));let st=1;const md=864e5;
-  for(let i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/md<=1.5)st++;else break}
-  const td=new Date().toDateString();if(ds[0]!==td&&ds[0]!==new Date(Date.now()-md).toDateString())return 0;return st}
+function calcStreak(ss){if(!ss.length)return 0;var ds=[];var seen={};ss.forEach(function(s){var d=new Date(s.date).toDateString();if(!seen[d]){seen[d]=true;ds.push(d)}});
+  ds.sort(function(a,b){return new Date(b)-new Date(a)});var st=1;var md=864e5;
+  for(var i=1;i<ds.length;i++){if((new Date(ds[i-1])-new Date(ds[i]))/md<=1.5)st++;else break}
+  var td=new Date().toDateString();if(ds[0]!==td&&ds[0]!==new Date(Date.now()-md).toDateString())return 0;return st}
 function renderSpark(ss){
-  const svg=document.getElementById('sparkline'),sc=ss.map(s=>s.score),w=300,h=60,pd=8;
-  const mx=Math.max(...sc,1),mn=Math.min(...sc,0),rng=mx-mn||1;
-  const pts=sc.map((s,i)=>({x:pd+(i/Math.max(sc.length-1,1))*(w-pd*2),y:pd+(1-(s-mn)/rng)*(h-pd*2),s}));
-  svg.innerHTML=`<polyline points="${pts.map(p=>`${p.x},${p.y}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${pts.map((p,i)=>{const l=i===pts.length-1;return`<circle cx="${p.x}" cy="${p.y}" r="${l?4:3}" fill="${l?'var(--accent)':'var(--border)'}" stroke="var(--white)" stroke-width="1.5"/>`}).join('')}${pts.length?`<text x="${pts[pts.length-1].x+8}" y="${pts[pts.length-1].y+4}" fill="var(--black)" font-family="DM Mono,monospace" font-size="11" font-weight="500">${pts[pts.length-1].s}</text>`:''}`;
+  var svg=document.getElementById('sparkline'),sc=ss.map(function(s){return s.score}),w=300,h=60,pd=8;
+  var mx=Math.max.apply(null,sc.concat([1])),mn=Math.min.apply(null,sc.concat([0])),rng=mx-mn||1;
+  var pts=sc.map(function(s,i){return{x:pd+(i/Math.max(sc.length-1,1))*(w-pd*2),y:pd+(1-(s-mn)/rng)*(h-pd*2),s:s}});
+  var html='<polyline points="'+pts.map(function(p){return p.x+','+p.y}).join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  pts.forEach(function(p,i){var l=i===pts.length-1;html+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(l?4:3)+'" fill="'+(l?'var(--accent)':'var(--border)')+'" stroke="var(--white)" stroke-width="1.5"/>'});
+  if(pts.length)html+='<text x="'+(pts[pts.length-1].x+8)+'" y="'+(pts[pts.length-1].y+4)+'" fill="var(--black)" font-family="DM Mono,monospace" font-size="11" font-weight="500">'+pts[pts.length-1].s+'</text>';
+  svg.innerHTML=html;
 }
 
-// ─── Keyboard ─────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{
+/* ─── Keyboard ───────────────────────────────────────────────────────── */
+document.addEventListener('keydown',function(e){
   if(e.code==='Space'&&!['INPUT','TEXTAREA'].includes(e.target.tagName))e.preventDefault();
   if(e.code==='Space'){if(document.getElementById('screen-home').classList.contains('active'))startSession();else if(document.getElementById('screen-record').classList.contains('active'))stopSession()}
   if(e.code==='Escape'&&isRecording)cancelSession();
@@ -618,9 +629,9 @@ document.addEventListener('keydown',e=>{
     if(document.getElementById('screen-home').classList.contains('active')||document.getElementById('screen-results').classList.contains('active')){showScreen('history');renderHistory()}}
 });
 
-// ─── Utilities ────────────────────────────────────────────────────────
-function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function fmtDur(s){if(s<60)return s+'s';const m=Math.floor(s/60);return m+'m'+(s%60?' '+s%60+'s':'')}
+/* ─── Utilities ──────────────────────────────────────────────────────── */
+function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function fmtDur(s){if(s<60)return s+'s';var m=Math.floor(s/60);return m+'m'+(s%60?' '+s%60+'s':'')}
 </script>
 </body>
 </html>
