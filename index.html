@@ -161,6 +161,9 @@ button:focus:not(:focus-visible){outline:none}
 .vocab-phrase{font-size:0.78rem;color:var(--text-muted);padding:2px 0}
 .vocab-phrase-op{background:var(--accent-light);color:var(--accent-dark);padding:1px 5px;font-size:0.75rem}
 .vocab-phrase-better{background:var(--accent);color:#fff;padding:1px 5px;font-size:0.75rem}
+.noise-warn{display:none;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;padding:10px 16px;margin:0 0 12px;font-size:0.85rem;text-align:center}
+.noise-warn.visible{display:block}
+[data-theme="dark"] .noise-warn{background:#3a3010;color:#fbbf24;border-color:#92400e}
 @media(max-width:600px){
   .kbd-hint{display:none}
   .mode-grid{flex-direction:column;gap:6px}
@@ -206,6 +209,7 @@ button:focus:not(:focus-visible){outline:none}
   <div class="nav-row mt-16"><button class="btn btn-sm" onclick="showScreen('history');renderHistory()">History (H)</button></div>
 </div></div>
 <div id="screen-record" class="screen"><div class="container">
+  <div class="noise-warn" id="noise-warn">&#9888; Background noise detected — results may be affected. Try a quieter environment.</div>
   <div id="prompt-area" class="prompt-box hidden"><div class="prompt-label">Your prompt</div><div class="prompt-text" id="prompt-text"></div><div class="prompt-timer mono" id="prompt-timer">2:00</div></div>
   <div id="speech-header" class="hidden" style="margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="mono text-sm text-muted" id="speech-elapsed">0:00</span><span class="mono text-sm" id="speech-target-display">Target: 3:00</span></div>
@@ -246,12 +250,14 @@ button:focus:not(:focus-visible){outline:none}
 <script>
 /* ─── State ────────────────────────────────────────────────────── */
 var currentMode='freeform',isRecording=false,recognition=null,audioCtx=null,analyser=null,pitchBuf=null,stream=null,animFrameId=null;
-var startTime=0,lastSpeechTime=0,finalTranscript=[],interimText='',wordCount=0,fillerCount=0,repeatPenalty=0,pauseCount=0,longPauseCount=0,silenceStart=0,inSilence=false;
+var startTime=0,lastSpeechTime=0,finalTranscript=[],interimText='',wordCount=0,fillerCount=0,repeatPenalty=0,pauseCount=0,longPauseCount=0;
+var silenceStart=0,inSilence=false,pauseCounted=false;
 var timerInterval=null,wpmInterval=null,promptTimerInterval=null,promptSecondsLeft=0;
 var currentPitch=0,pitchSamples=[];
 var speechSentences=[],speechTargetSeconds=180;
 var vocabScore=0,vocabUpgrades=[],vocabPhraseUpgrades=[];
 var BAR_COUNT=8;
+var noiseWarningShown=false,noiseLoudFrames=0,noiseTotalFrames=0;
 
 /* ─── Theme ────────────────────────────────────────────────────── */
 function initTheme(){
@@ -265,10 +271,11 @@ function toggleTheme(){
   var isDark=document.documentElement.getAttribute('data-theme')==='dark';
   if(isDark){document.documentElement.removeAttribute('data-theme');localStorage.setItem('speakup_theme','light')}
   else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('speakup_theme','dark')}
-  updateThemeBtn();
+  updateThemeBtn();updateMetaTheme();
 }
 function updateThemeBtn(){document.getElementById('theme-btn').innerHTML=document.documentElement.getAttribute('data-theme')==='dark'?'&#9788;':'&#9789;'}
-initTheme();
+function updateMetaTheme(){var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=document.documentElement.getAttribute('data-theme')==='dark'?'#0f1219':'#f7f5f0'}
+initTheme();updateMetaTheme();
 
 /* ─── Filler words (longest first) ────────────────────────────── */
 var FILLER_PHRASES=['you know','kind of','sort of','i mean','basically','literally','actually','um','uh','like','right','so'];
@@ -416,12 +423,14 @@ function countRepeatFillers(text){
 /* ─── Session lifecycle ──────────────────────────────────────── */
 function startSession(){
   if(isRecording)return;
-  finalTranscript=[];interimText='';wordCount=0;fillerCount=0;repeatPenalty=0;pauseCount=0;longPauseCount=0;silenceStart=0;inSilence=false;lastSpeechTime=0;
+  finalTranscript=[];interimText='';wordCount=0;fillerCount=0;repeatPenalty=0;pauseCount=0;longPauseCount=0;silenceStart=0;inSilence=false;pauseCounted=false;lastSpeechTime=0;
   currentPitch=0;pitchSamples=[];speechSentences=[];vocabScore=0;vocabUpgrades=[];vocabPhraseUpgrades=[];
+  noiseWarningShown=false;noiseLoudFrames=0;noiseTotalFrames=0;
   document.getElementById('stat-wpm').textContent='--';document.getElementById('stat-fillers').textContent='0';
   document.getElementById('stat-pauses').textContent='0';document.getElementById('stat-hz').textContent='--';
   document.getElementById('stat-vocab').textContent='--';document.getElementById('stat-time').textContent='0:00';
   document.getElementById('transcript-area').innerHTML='';
+  document.getElementById('noise-warn').classList.remove('visible');
 
   var speechHeader=document.getElementById('speech-header');
   if(currentMode==='speech'){
@@ -546,23 +555,51 @@ function renderTranscript(){
 }
 function updateFillerDisplay(){var el=document.getElementById('stat-fillers'),p=parseInt(el.textContent)||0;if(fillerCount!==p){el.textContent=fillerCount;el.classList.remove('pulse');el.offsetHeight;el.classList.add('pulse')}}
 
-/* ─── Waveform + pitch + pauses ──────────────────────────────── */
+/* ─── Waveform + pitch + pauses + noise ───────────────────────── */
 function startWaveform(){
   var bars=document.querySelectorAll('.wave-bar');bars.forEach(function(b){b.classList.remove('idle')});
   if(!analyser){bars.forEach(function(b){b.style.height='6px'});return}
   var bl=analyser.frequencyBinCount,da=new Uint8Array(bl);
+  noiseLoudFrames=0;noiseTotalFrames=0;
   function draw(){
     if(!isRecording)return;animFrameId=requestAnimationFrame(draw);
     if(!analyser)return;
     analyser.getByteFrequencyData(da);var step=Math.floor(bl/BAR_COUNT);var sum=0;
     for(var i=0;i<BAR_COUNT;i++){var bs=0;for(var j=0;j<step;j++)bs+=da[i*step+j];var avg=bs/step;bars[i].style.height=Math.max(3,(avg/255)*32)+'px';sum+=avg}
     var ma=sum/BAR_COUNT,now=Date.now();
-    if(ma<10){if(!inSilence){inSilence=true;silenceStart=now}}
-    else{inSilence=false;lastSpeechTime=now;  // track last speech for trailing silence
-      var sd=now-silenceStart;
-      // Only count pauses that happened BEFORE the last 3 seconds of recording
-      if(sd>800){pauseCount++;document.getElementById('stat-pauses').textContent=pauseCount}
-      if(sd>2500)longPauseCount++}
+
+    // Noise detection — sample first 3 seconds for loud background
+    var elapsed=now-startTime;
+    if(elapsed<3000){
+      noiseTotalFrames++;
+      if(ma>35)noiseLoudFrames++;
+    }else if(!noiseWarningShown){
+      noiseWarningShown=true;
+      if(noiseTotalFrames>30&&noiseLoudFrames/noiseTotalFrames>0.6){
+        document.getElementById('noise-warn').classList.add('visible');
+      }
+    }
+
+    // Pause detection: one pause per silence period, counted when silence ends
+    if(ma<15){
+      // Silence
+      if(!inSilence){inSilence=true;silenceStart=now;pauseCounted=false}
+    }else{
+      // Audio detected
+      lastSpeechTime=now;
+      if(inSilence&&!pauseCounted){
+        // Silence just ended — measure how long it was
+        var silenceDuration=now-silenceStart;
+        if(silenceDuration>800){
+          pauseCount++;
+          document.getElementById('stat-pauses').textContent=pauseCount;
+          pauseCounted=true;
+          if(silenceDuration>2500)longPauseCount++;
+        }
+      }
+      inSilence=false;
+    }
+
     if(pitchBuf&&Math.random()<0.1){analyser.getFloatTimeDomainData(pitchBuf);
       var pp=detectPitch(pitchBuf,audioCtx.sampleRate);if(pp>50&&pp<600){currentPitch=Math.round(pp);pitchSamples.push(currentPitch);document.getElementById('stat-hz').textContent=currentPitch}}
   }draw();
